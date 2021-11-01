@@ -114,8 +114,21 @@ function AddressDescriptionValue(props: { address: Address, addressInfo: Address
     return <>{props.address}</>
   }
 
-  // @ts-ignore
-  const name = addyInfo[0] && addyInfo[0].name ? addyInfo[0]?.name :  props.address
+  let name = props.address
+
+  if (addyInfo[0]) {
+    switch (addyInfo[0].type) {
+      case AddressInfoType.TokenListInfo:
+        name = `Token: ${addyInfo[0].name} (${addyInfo[0].symbol})`
+        break;
+
+      case AddressInfoType.GenericAddressInfo:
+        name = addyInfo[0].name
+        break;
+      default:
+        break;
+    }
+  }
 
 
   return (
@@ -130,7 +143,7 @@ function AddressDescriptionValue(props: { address: Address, addressInfo: Address
       </Badge>
     </Popover>
   )
-  
+
 }
 
 function ParsedTransaction(props:{ to: Address, result: ParserResult | undefined }) {

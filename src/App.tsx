@@ -25,6 +25,10 @@ function App() {
       explorer: 'https://alfajores-blockscout.celo-testnet.org',
       chainId: 44787,
     }}
+
+    connectModal={{
+      denylist: []
+    }}
   >
     <WalletConnectContextProvider>
       <Layout>
@@ -51,11 +55,11 @@ function App() {
                       <Popover content={"test"} title="Spender Info">
                         <Badge dot color='blue'>
 
-                      
+
                         <a href='#'>Mento cUSD Exchange</a>
                         </Badge>
                       </Popover>
-                      
+
                     </Descriptions.Item>
                     <Descriptions.Item label="value">30000000000</Descriptions.Item>
                   </Descriptions>
