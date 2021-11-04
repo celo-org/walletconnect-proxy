@@ -1,5 +1,5 @@
 import { useContractKit } from "@celo-tools/use-contractkit";
-import { Button, Descriptions, PageHeader } from "antd";
+import { Button, PageHeader } from "antd";
 
 export default function Header() {
     const { account, connect, destroy } = useContractKit()

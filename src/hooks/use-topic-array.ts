@@ -1,19 +1,26 @@
-import Item from "antd/lib/list/Item"
 import { useState } from "react"
 
-export default function useTopicArray<T extends { topic: string }>(): [Array<T>, (item: T) => void, (item: T) => void, (topic: string, partialItem: Partial<T>) => void] {
-  const [data, setData] = useState<Array<T>>([])
-  const addItem = (item: T) => setData(data => [...data, item])
-  const removeItem = (item: T) => setData(data => {
-    const index = data.findIndex(_ => _.topic === item.topic)
-    data.splice(index, 1)
-    return data
+interface State<T> {
+  [key: string]: T
+}
+export default function useKeyState<T extends { key: string }>(): [State<T>, (item: T) => void, (item: T) => void, (key: string, partialItem: Partial<T>) => void] {
+  const [data, setData] = useState<State<T>>({})
+
+  const addItem = (item: T) => setData(data => {
+    const newData = { ...data }
+    newData[item.key] = item
+    return newData
   })
-  const updateItem = (topic: string, partialItem: Partial<T>) => setData(data => {
-    const index = data.findIndex(_ => _.topic === topic)
-    const item = data[index]
-    data.splice(index, 1)
-    return [...data, { ...item, ...partialItem }]
+  const removeItem = (item: T) => setData(data => {
+    const newData = { ...data }
+    delete newData[item.key]
+    return newData
+  })
+  const updateItem = (key: string, partialItem: Partial<T>) => setData(data => {
+    const newData = { ...data }
+    const oldItem = data[key]
+    newData[key] = { ...oldItem, ...partialItem }
+    return newData
   })
   
   return [
