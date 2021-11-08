@@ -1,4 +1,4 @@
-import { createContext, FC, useContext, useEffect } from "react";
+import { createContext, FC, useContext, useEffect, useState } from "react";
 import WalletConnect from "@walletconnect/client";
 import useKeyState from "./use-topic-array";
 import { celoAbiFetchers, celoAddressInfoFetchers, Parser, ParserResult, Transaction } from "no-yolo-signatures";
@@ -20,7 +20,9 @@ interface Sessions {
 
 type WalletConnectContextProps = {
   sessions: Sessions,
+  chainId: number,
   initiate: (uri: string) => void,
+  changeNetwork: (newChainId: number) => void,
   approveSessionRequest: (key: string) => void,
   rejectSessionRequest: (key: string) => void,
   disconnect: (key: string) => void,
@@ -29,7 +31,9 @@ type WalletConnectContextProps = {
 
 const WalletConnectContext = createContext<WalletConnectContextProps>({
   sessions: {},
+  chainId: 0,
   initiate: () => {},
+  changeNetwork: () => {},
   approveSessionRequest: () => {},
   rejectSessionRequest: () => {},
   disconnect: () => {},
@@ -59,7 +63,8 @@ const toChecksum = utils.getAddress
 export const WalletConnectContextProvider: FC = ({ children }) => {
   const [sessions, addSession, removeSession, updateSession] = useKeyState<Session>()
   const [signatureRequests, addSignatureRequest,, updateSignatureRequest] = useKeyState<TransactionSignatureRequest>()
-  const { address } = useOnboard()
+  const [chainId, setChainId] = useState<number>(42220)
+  const { onboard, address } = useOnboard()
 
   const ALL_SESSION_KEY = '/walletconnectproxy/sessions'
   const persistSession = (client: WalletConnect) => {
@@ -169,7 +174,7 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
     if (session.client.connected) { return }
     session.client.approveSession({
       accounts: [address],
-      chainId: 42220
+      chainId
     })
   }
 
@@ -190,10 +195,20 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
     session.client.killSession()
   }
 
+  const changeNetwork = async (newChainId: number) => {
+    setChainId(newChainId)
+    if (onboard) {
+      onboard.config({ networkId: newChainId })
+      await onboard.walletCheck()
+    }
+  }
+
   return (
     <WalletConnectContext.Provider value={{
       sessions,
+      chainId,
       initiate,
+      changeNetwork,
       approveSessionRequest,
       rejectSessionRequest,
       disconnect,

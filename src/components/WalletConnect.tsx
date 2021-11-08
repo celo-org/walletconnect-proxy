@@ -46,7 +46,6 @@ export function WalletConnectSessionRequest() {
       )
     }
 
-    console.log(session)
     return (
       <Col span={8} key={session.key + 'sessionRequest'}>
         <Card title="Session">
