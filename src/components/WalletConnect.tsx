@@ -1,6 +1,5 @@
-import { Address } from "@celo/contractkit";
 import { Badge, Button, Card, Col, Descriptions, Input, Popover, Typography } from "antd";
-import { AddressFetchResult, AddressInfo, AddressInfoType, ParserResult } from "no-yolo-signatures";
+import { Address, AddressFetchResult, AddressInfo, AddressInfoType, ParserResult } from "no-yolo-signatures";
 import { useState } from "react";
 import { useWalletConnect } from "../hooks/use-walletconnect";
 const { Paragraph } = Typography

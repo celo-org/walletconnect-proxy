@@ -1,15 +1,15 @@
-import { useContractKit } from "@celo-tools/use-contractkit";
 import { Card, Col } from "antd";
+import { useOnboard } from "../hooks/use-onboard";
 
 
 
 export default function WalletStatus() {
-  const { address, network, connect, walletType } = useContractKit();
+  const { address, selectWallet } = useOnboard();
 
   if (!address) {
     return (
       <Card title="Wallet Status">
-        <p>Not logged in. <a href='#' onClick={connect}>Connect wallet</a></p>
+        <p>Not logged in. <a href='#' onClick={selectWallet}>Connect wallet</a></p>
       </Card>
     )
   }
@@ -17,9 +17,7 @@ export default function WalletStatus() {
   return (
     <Col span={8}>
       <Card title="Wallet Status" extra={<a href="#">More</a>}>
-        <p><b>Wallet Type:</b> {walletType}</p>
         <p><b>Address:</b> {address}</p>
-        <p><b>Network:</b> {network.name}</p>
       </Card>
     </Col>
 

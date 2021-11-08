@@ -1,10 +1,10 @@
-import { createContext, FC, useContext } from "react";
+import { createContext, FC, useContext, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
-import { useContractKit } from "@celo-tools/use-contractkit";
 import useKeyState from "./use-topic-array";
 import { celoAbiFetchers, celoAddressInfoFetchers, Parser, ParserResult, Transaction } from "no-yolo-signatures";
 import { utils } from "ethers";
 import { IJsonRpcRequest } from "@walletconnect/types";
+import { useOnboard } from "./use-onboard";
 
 interface Session {
   key: string,
@@ -59,20 +59,48 @@ const toChecksum = utils.getAddress
 export const WalletConnectContextProvider: FC = ({ children }) => {
   const [sessions, addSession, removeSession, updateSession] = useKeyState<Session>()
   const [signatureRequests, addSignatureRequest,, updateSignatureRequest] = useKeyState<TransactionSignatureRequest>()
-  const { address } = useContractKit()
-  const initiate = async (uri: string) => {
-    const key = uri
-    const client = new WalletConnect({
-      uri,
-      clientMeta: metadata
+  const { address } = useOnboard()
+
+  const ALL_SESSION_KEY = '/walletconnectproxy/sessions'
+  const persistSession = (client: WalletConnect) => {
+    const sessionKeys = window.localStorage.getItem(ALL_SESSION_KEY)?.split(',') || []
+    const sessionKey = client.session.peerId
+    sessionKeys.push(sessionKey)
+    window.localStorage.setItem(ALL_SESSION_KEY, sessionKeys.join(','))
+    window.localStorage.setItem(`${ALL_SESSION_KEY}/${sessionKey}`, JSON.stringify(client.session))
+  }
+
+  const recoverPersistedSessions = () => {
+    const sessionKeys = window.localStorage.getItem(ALL_SESSION_KEY)?.split(',') || []
+    sessionKeys.forEach(sessionKey => {
+      const rawSession = window.localStorage.getItem(`${ALL_SESSION_KEY}/${sessionKey}`)
+      if (!rawSession) {
+        return
+      }
+      const session = JSON.parse(rawSession)
+      const client = new WalletConnect({ session })
+      // @ts-ignore
+      window.client = client
+      addClient(sessionKey, client)
     })
+  }
+
+  const removePersistedSession = (client: WalletConnect) => {
+    const sessionKeys = window.localStorage.getItem(ALL_SESSION_KEY)?.split(',') || []
+    const index = sessionKeys.indexOf(client.session.peerId)
+    if (index !== -1) {
+      sessionKeys.splice(index, 1)
+      window.localStorage.setItem(ALL_SESSION_KEY, sessionKeys.join(','))
+    }
+  }
+
+  const addClient = (key: string, client: WalletConnect) => {
     const session = {
       key,
       client,
       requested: false,
-      connected: false
+      connected: client.session.connected
     }
-
     client.on("session_request", (error, payload) => {
       if (error) {
         throw error
@@ -82,8 +110,8 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
 
     client.on("connect", (error) => {
       if (error) { throw error }
-      console.log('connected')
       updateSession(key, { connected: true })
+      persistSession(client)
     })
     client.on("disconnect", (error) => {
       if (error) { throw error}
@@ -119,6 +147,20 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
 
     addSession(session)
   }
+  
+
+  useEffect( () => {
+    recoverPersistedSessions()
+  }, [])
+
+  const initiate = async (uri: string) => {
+    const key = uri
+    const client = new WalletConnect({
+      uri,
+      clientMeta: metadata
+    })
+    addClient(key, client)
+  }
 
   const approveSessionRequest = (key: string) => {
     const session = sessions[key]
@@ -129,7 +171,6 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
       accounts: [address],
       chainId: 42220
     })
-    console.log('approved')
   }
 
   const rejectSessionRequest = (key: string) => {
@@ -145,6 +186,7 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
   const disconnect = async (key: string) => {
     const session = sessions[key]
     if (!session) { return }
+    removePersistedSession(session.client)
     session.client.killSession()
   }
 

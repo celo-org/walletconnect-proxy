@@ -1,10 +1,10 @@
-import { useContractKit } from "@celo-tools/use-contractkit";
 import { Button, PageHeader } from "antd";
+import { useOnboard } from "../hooks/use-onboard";
 
 export default function Header() {
-    const { account, connect, destroy } = useContractKit()
-    const text = !!account ? `Log out` : "Connect wallet"
-    const toggleLogin = !!account ? destroy : connect
+    const { address, selectWallet, disconnectWallet } = useOnboard()
+    const text = !!address ? `Log out` : "Connect wallet"
+    const toggleLogin = !!address ? disconnectWallet : selectWallet
     return <PageHeader
     ghost={false}
     title="WalletConnect Proxy"
