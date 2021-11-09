@@ -1,5 +1,4 @@
 import './App.css';
-import '@celo-tools/use-contractkit/lib/styles.css';
 import Header from './components/Header';
 import { Layout, Row } from 'antd';
 import { Content } from 'antd/lib/layout/layout';
