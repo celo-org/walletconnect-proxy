@@ -20,9 +20,7 @@ interface Sessions {
 
 type WalletConnectContextProps = {
   sessions: Sessions,
-  chainId: number,
   initiate: (uri: string) => void,
-  changeNetwork: (newChainId: number) => void,
   approveSessionRequest: (key: string) => void,
   rejectSessionRequest: (key: string) => void,
   disconnect: (key: string) => void,
@@ -31,9 +29,7 @@ type WalletConnectContextProps = {
 
 const WalletConnectContext = createContext<WalletConnectContextProps>({
   sessions: {},
-  chainId: 0,
   initiate: () => {},
-  changeNetwork: () => {},
   approveSessionRequest: () => {},
   rejectSessionRequest: () => {},
   disconnect: () => {},
@@ -63,8 +59,7 @@ const toChecksum = utils.getAddress
 export const WalletConnectContextProvider: FC = ({ children }) => {
   const [sessions, addSession, removeSession, updateSession] = useKeyState<Session>()
   const [signatureRequests, addSignatureRequest,, updateSignatureRequest] = useKeyState<TransactionSignatureRequest>()
-  const [chainId, setChainId] = useState<number>(42220)
-  const { onboard, address } = useOnboard()
+  const { chainId, address } = useOnboard()
 
   const ALL_SESSION_KEY = '/walletconnectproxy/sessions'
   const persistSession = (client: WalletConnect) => {
@@ -158,6 +153,13 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
     recoverPersistedSessions()
   }, [])
 
+  useEffect( () => {
+    Object.values(sessions).map((session) => {
+      // @ts-ignore
+      session.client.updateChain({ chainId: chainId })
+    })
+  }, [chainId])
+
   const initiate = async (uri: string) => {
     const key = uri
     const client = new WalletConnect({
@@ -195,20 +197,12 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
     session.client.killSession()
   }
 
-  const changeNetwork = async (newChainId: number) => {
-    setChainId(newChainId)
-    if (onboard) {
-      onboard.config({ networkId: newChainId })
-      await onboard.walletCheck()
-    }
-  }
+
 
   return (
     <WalletConnectContext.Provider value={{
       sessions,
-      chainId,
       initiate,
-      changeNetwork,
       approveSessionRequest,
       rejectSessionRequest,
       disconnect,

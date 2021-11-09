@@ -2,6 +2,7 @@ import { Badge, Button, Card, Col, Descriptions, Input, Popover, Typography } fr
 import { Address, AddressFetchResult, AddressInfo, AddressInfoType, ParserResult } from "no-yolo-signatures";
 import { useState } from "react";
 import { useWalletConnect } from "../hooks/use-walletconnect";
+import { ParamType } from "@ethersproject/abi";
 const { Paragraph } = Typography
 
 export function WalletConnectInput() {
@@ -78,6 +79,12 @@ function AddressInfoC(props: { info: AddressInfo }) {
           <Descriptions.Item label="Symbol">{props.info.symbol}</Descriptions.Item>
         </Descriptions>
       )
+    case AddressInfoType.ContextInfo:
+      return (
+        <Descriptions title="Context">
+          <Descriptions.Item label="Context type">{ props.info.contextType }</Descriptions.Item>
+        </Descriptions>
+      )
     default:
       break;
   }
@@ -122,6 +129,30 @@ function AddressDescriptionValue(props: { address: Address, addressInfo: Address
 
 }
 
+function FunctionParameterValue(props: { arg: any, fragment: ParamType, result: ParserResult | undefined } ) {
+  if (props.fragment.type === 'address') {
+    const addressInfo = props.result?.addressInfo[props.arg]
+    if (addressInfo) {
+      return <AddressDescriptionValue address={props.arg} addressInfo={props.result?.addressInfo!} />
+    }
+  }
+  if (props.fragment.arrayChildren) {
+    const style = { marginLeft: '4px', marginRight: '4px'}
+    const arr = props.arg.flatMap((val: any, index: number) =>
+      [<FunctionParameterValue key={index} arg={val} fragment={props.fragment.arrayChildren} result={props.result} />, <span key={`span${index}`} style={style}>,</span>]
+    )
+    arr.splice(arr.length-1, 1)
+    return (
+      <>
+        <span style={style}>[</span>
+        { arr }
+        <span style={style}>]</span>
+      </>
+    )
+  }
+  return props.arg.toString()
+}
+
 function ParsedTransaction(props: { to: Address, result: ParserResult | undefined }) {
   if (!props.result) {
     return null
@@ -134,26 +165,18 @@ function ParsedTransaction(props: { to: Address, result: ParserResult | undefine
 
   const parsedArgs = transactionDescription.args.map((arg, index) => {
     const fragment = transactionDescription.functionFragment.inputs[index]
-    let value = arg.toString()
-    if (fragment.type === 'address') {
-      const addressInfo = props.result?.addressInfo[arg]
-      if (addressInfo) {
-        value = <AddressDescriptionValue address={arg} addressInfo={props.result?.addressInfo!} />
-      }
-
-    }
     return (
-      <Descriptions.Item label={fragment.name} key={index}>
-        {value}
+      <Descriptions.Item label={fragment.name} key={index} span={24}>
+        <FunctionParameterValue arg={arg} fragment={fragment} result={props.result} />
       </Descriptions.Item>
     )
   })
   return (
     <Descriptions title="Parsed" bordered>
-      <Descriptions.Item label="To">
+      <Descriptions.Item label="To" span={24}>
         <AddressDescriptionValue address={props.to} addressInfo={props.result.addressInfo} />
       </Descriptions.Item>
-      <Descriptions.Item label="Function" span={3}>{transactionDescription.name}({transactionDescription.functionFragment.inputs.map(_ => _.name).join(', ')})</Descriptions.Item>
+      <Descriptions.Item label="Function" span={24}>{transactionDescription.name}({transactionDescription.functionFragment.inputs.map(_ => _.name).join(', ')})</Descriptions.Item>
       {parsedArgs}
     </Descriptions>
   )
@@ -167,9 +190,9 @@ export function WalletConnectTransactionSignatureRequests() {
       <Card title="Transaction Signature Request">
         <p>Dapp requests signature:</p>
         <Descriptions title="Transaction" bordered>
-          <Descriptions.Item label="From">{request.transaction.from}</Descriptions.Item>
-          <Descriptions.Item label="To">{request.transaction.to}</Descriptions.Item>
-          <Descriptions.Item label="Data" span={2}>{request.transaction.data}</Descriptions.Item>
+          <Descriptions.Item label="From" span={24}>{request.transaction.from}</Descriptions.Item>
+          <Descriptions.Item label="To" span={24}>{request.transaction.to}</Descriptions.Item>
+          <Descriptions.Item label="Data" span={24}>{request.transaction.data}</Descriptions.Item>
         </Descriptions>
 
         <ParsedTransaction result={request.noYoloResult} to={request.transaction.to} />
