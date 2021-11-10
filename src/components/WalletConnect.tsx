@@ -5,6 +5,7 @@ import {
   Col,
   Collapse,
   Descriptions,
+  Divider,
   Input,
   Popover,
   Typography,
@@ -17,7 +18,7 @@ import {
   ParserResult,
 } from "no-yolo-signatures";
 import { useState } from "react";
-import { useWalletConnect } from "../hooks/use-walletconnect";
+import { TransactionSignatureRequestState, useWalletConnect } from "../hooks/use-walletconnect";
 import { ParamType } from "@ethersproject/abi";
 
 export function WalletConnectSessionRequest() {
@@ -62,26 +63,25 @@ export function WalletConnectSessionRequest() {
     }
 
     return (
-      <Collapse.Panel header={`Session: ${session.client.peerMeta?.name}`} key={session.key + "sessionRequest"}>
-          <p>
-            <b>Name:</b>{" "}
-            <a href={session.client.peerMeta?.url}>
-              {session.client.peerMeta?.name}
-            </a>
-          </p>
-          <p>
-            <b>Description:</b> {session.client.peerMeta?.description}
-          </p>
-          {buttons}
+      <Collapse.Panel
+        header={`Session: ${session.client.peerMeta?.name}`}
+        key={session.key + "sessionRequest"}
+      >
+        <p>
+          <b>Name:</b>{" "}
+          <a href={session.client.peerMeta?.url}>
+            {session.client.peerMeta?.name}
+          </a>
+        </p>
+        <p>
+          <b>Description:</b> {session.client.peerMeta?.description}
+        </p>
+        {buttons}
       </Collapse.Panel>
     );
   });
-  
-  return (
-    <Collapse activeKey={ret.map(_ => _.key as string)}>
-      { ret }
-    </Collapse>
-  )
+
+  return <Collapse activeKey={ret.map((_) => _.key as string)}>{ret}</Collapse>;
 }
 
 function AddressInfoC(props: { info: AddressInfo }) {
@@ -261,12 +261,14 @@ export function WalletConnectSection() {
             value={secret}
             onChange={(evt) => setSecret(evt.target.value)}
             onSearch={(value) => {
-              initiate(value)
-              setSecret('')
+              initiate(value);
+              setSecret("");
             }}
             enterButton="Connect"
+            placeholder="Paste the WC URI here"
           />
         </Input.Group>
+        <Divider />
         <WalletConnectSessionRequest />
       </Card>
     </Col>
@@ -274,36 +276,60 @@ export function WalletConnectSection() {
 }
 
 export function WalletConnectTransactionSignatureRequests() {
-  const { signatureRequests } = useWalletConnect();
+  const { signatureRequests, approveTransactionSignature, rejectTransactionSignature } = useWalletConnect();
+  const empty = Object.keys(signatureRequests).length === 0 ? <p>No signature requests</p> : null
   const ret = Object.values(signatureRequests).map((request) => {
+    const action = request.state === TransactionSignatureRequestState.AwaitUserAction ? (<>
+      <Button onClick={() => approveTransactionSignature(request.key)} type={"primary"}>Approve</Button>
+      <Button onClick={() => rejectTransactionSignature(request.key)} danger>Reject</Button>
+    </>) : null
+    let state = null
+    switch (request.state) {
+      case TransactionSignatureRequestState.Mined:
+        state = <p>Mined: {request.txHash}</p>
+        break;
+    
+      default:
+        state = request.state
+        break;
+    }
     return (
-      <Collapse.Panel header={`Request to ${request.transaction.to}`} key={request.key}>
-          <p>Dapp requests signature:</p>
-          <Descriptions title="Transaction" bordered>
-            <Descriptions.Item label="From" span={24}>
-              {request.transaction.from}
-            </Descriptions.Item>
-            <Descriptions.Item label="To" span={24}>
-              {request.transaction.to}
-            </Descriptions.Item>
-            <Descriptions.Item label="Data" span={24}>
-              {request.transaction.data}
-            </Descriptions.Item>
-          </Descriptions>
+      <Collapse.Panel
+        header={`Request to ${request.transaction.to}`}
+        key={request.key}
+      >
+        <p>Dapp requests signature:</p>
+        <Descriptions title="Transaction" bordered>
+          <Descriptions.Item label="Status" span={24}>
+            {state}
+          </Descriptions.Item>
+          <Descriptions.Item label="From" span={24}>
+            {request.transaction.from}
+          </Descriptions.Item>
+          <Descriptions.Item label="To" span={24}>
+            {request.transaction.to}
+          </Descriptions.Item>
+          <Descriptions.Item label="Data" span={24}>
+            {request.transaction.data}
+          </Descriptions.Item>
+        </Descriptions>
+        <Divider />
 
-          <ParsedTransaction
-            result={request.noYoloResult}
-            to={request.transaction.to}
-          />
+        <ParsedTransaction
+          result={request.noYoloResult}
+          to={request.transaction.to}
+        />
+        <Divider />
+        { action }
       </Collapse.Panel>
     );
   });
-  return <Col span={24}>
-    <Card title="Transaction Requests">
-      <Collapse activeKey={ret.map(_ => _.key as string)}>
-
-    {ret}
-    </Collapse>
+  return (
+    <Col span={24}>
+      <Card title="Transaction Requests">
+        { empty }
+        <Collapse activeKey={ret.map((_) => _.key as string)}>{ret}</Collapse>
       </Card>
-    </Col>;
+    </Col>
+  );
 }

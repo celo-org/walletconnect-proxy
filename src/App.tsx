@@ -16,7 +16,7 @@ function App() {
       <WalletConnectContextProvider>
         <Layout>
           <Header />
-          <Content style={{ padding: "0 50px", minHeight: "280px" }}>
+          <Content style={{ padding: "0 25px", minHeight: "280px" }}>
             <div className="site-layout-content">
               <Row gutter={16}>
                 <WalletStatus />

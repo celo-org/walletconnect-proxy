@@ -8,7 +8,6 @@ export default function Header() {
     return <PageHeader
     ghost={false}
     title="WalletConnect Proxy"
-    subTitle="This is a subtitle"
     extra={[
       <Button key="1" type="primary" onClick={toggleLogin}>
         {text}
