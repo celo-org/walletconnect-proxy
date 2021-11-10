@@ -1,7 +1,7 @@
 import { createContext, FC, useContext, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import useKeyState from "./use-topic-array";
-import { celoAbiFetchers, celoAddressInfoFetchers, Parser, ParserResult, Transaction } from "no-yolo-signatures";
+import { getAddressInfoFetchersForChainId, getAbiFetchersForChainId, Parser, ParserResult, Transaction } from "no-yolo-signatures";
 import { utils } from "ethers";
 import { IJsonRpcRequest } from "@walletconnect/types";
 import { useOnboard } from "./use-onboard";
@@ -136,7 +136,9 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
           sessionKey: key
         })
 
-        const parser = new Parser({abiFetchers: celoAbiFetchers, addressInfoFetchers: celoAddressInfoFetchers})
+        const abiFetchers = getAbiFetchersForChainId(chainId)
+        const addressInfoFetchers = getAddressInfoFetchersForChainId(chainId)
+        const parser = new Parser({abiFetchers: abiFetchers, addressInfoFetchers: addressInfoFetchers})
         parser.parseAsResult(transaction).then(result => {
           updateSignatureRequest(key + payload.id, { noYoloResult: result })
         }).catch(console.error)
@@ -156,6 +158,7 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
 
   useEffect( () => {
     Object.values(sessions).forEach((session) => {
+      if (!session.client.connected) { return }
       // @ts-ignore
       session.client.updateChain({ chainId: chainId })
     })
