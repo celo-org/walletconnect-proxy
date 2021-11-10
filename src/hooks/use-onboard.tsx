@@ -24,7 +24,7 @@ const OnboardContext = createContext<OnboardContextProps>({
  */
 export const OnboardContextProvider: FC = ({ children }) => {
   const [onboard, setOnboard] = useState<API>()
-  const [chainId, setChainId] = useState<number>(42220)
+  const [chainId, setChainId] = useState<number>(1)
   // const [_wallet, setWallet] = useState<Wallet>()
   const [address, setAdress] = useState<string>()
   // const [_Balance, setBalance] = useState<string>()
