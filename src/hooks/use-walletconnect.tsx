@@ -1,4 +1,4 @@
-import { createContext, FC, useContext, useEffect, useState } from "react";
+import { createContext, FC, useContext, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import useKeyState from "./use-topic-array";
 import { celoAbiFetchers, celoAddressInfoFetchers, Parser, ParserResult, Transaction } from "no-yolo-signatures";
@@ -151,13 +151,15 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
 
   useEffect( () => {
     recoverPersistedSessions()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect( () => {
-    Object.values(sessions).map((session) => {
+    Object.values(sessions).forEach((session) => {
       // @ts-ignore
       session.client.updateChain({ chainId: chainId })
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chainId])
 
   const initiate = async (uri: string) => {

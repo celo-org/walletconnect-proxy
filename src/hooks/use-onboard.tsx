@@ -1,7 +1,6 @@
 import { useState, useEffect, createContext, useContext, FC } from 'react'
 import Onboard from 'bnc-onboard'
-import { API, Initialization, Wallet } from 'bnc-onboard/dist/src/interfaces'
-import { Web3Provider } from '@ethersproject/providers'
+import { API } from 'bnc-onboard/dist/src/interfaces'
 
 type OnboardContextProps = {
   onboard: API | undefined,
@@ -26,11 +25,11 @@ const OnboardContext = createContext<OnboardContextProps>({
 export const OnboardContextProvider: FC = ({ children }) => {
   const [onboard, setOnboard] = useState<API>()
   const [chainId, setChainId] = useState<number>(42220)
-  const [wallet, setWallet] = useState<Wallet>()
+  // const [_wallet, setWallet] = useState<Wallet>()
   const [address, setAdress] = useState<string>()
-  const [balance, setBalance] = useState<string>()
+  // const [_Balance, setBalance] = useState<string>()
   const [isWalletSelected, setWalletSelected] = useState<boolean>()
-  const [provider, setProvider] = useState<Web3Provider>()
+  // const [_provider, setProvider] = useState<Web3Provider>()
 
   // @ts-ignore
   window.onboard = onboard
@@ -44,17 +43,17 @@ export const OnboardContextProvider: FC = ({ children }) => {
           },
           wallet: wallet => {
             if (wallet.provider && wallet.name) {
-              setWallet(wallet)
+              // setWallet(wallet)
 
-              const ethersProvider = new Web3Provider(wallet.provider)
+              // const ethersProvider = new Web3Provider(wallet.provider)
 
               window.localStorage.setItem('selectedWallet', wallet.name)
 
-              setProvider(ethersProvider)
+              // setProvider(ethersProvider)
 
             } else {
-              setProvider(undefined)
-              setWallet(undefined)
+              // setProvider(undefined)
+              // setWallet(undefined)
               window.localStorage.removeItem('selectedWallet')
             }
           },
@@ -62,7 +61,7 @@ export const OnboardContextProvider: FC = ({ children }) => {
             if (address) setAdress(address)
           },
           balance: balance => {
-            if (isWalletSelected) setBalance(balance)
+            // if (isWalletSelected) setBalance(balance)
           }
         }
       })
@@ -98,7 +97,7 @@ export const OnboardContextProvider: FC = ({ children }) => {
       onboard.walletReset()
 
       setWalletSelected(false)
-      setBalance('')
+      // setBalance('')
       setAdress('')
 
       window.localStorage.removeItem('selectedWallet')
