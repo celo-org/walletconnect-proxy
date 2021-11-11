@@ -8,7 +8,6 @@ import {
   Divider,
   Input,
   Popover,
-  Typography,
 } from "antd";
 import {
   Address,
@@ -18,7 +17,10 @@ import {
   ParserResult,
 } from "no-yolo-signatures";
 import { useState } from "react";
-import { TransactionSignatureRequestState, useWalletConnect } from "../hooks/use-walletconnect";
+import {
+  TransactionSignatureRequestState,
+  useWalletConnect,
+} from "../hooks/use-walletconnect";
 import { ParamType } from "@ethersproject/abi";
 
 export function WalletConnectSessionRequest() {
@@ -276,21 +278,41 @@ export function WalletConnectSection() {
 }
 
 export function WalletConnectTransactionSignatureRequests() {
-  const { signatureRequests, approveTransactionSignature, rejectTransactionSignature } = useWalletConnect();
-  const empty = Object.keys(signatureRequests).length === 0 ? <p>No signature requests</p> : null
+  const {
+    signatureRequests,
+    approveTransactionSignature,
+    rejectTransactionSignature,
+  } = useWalletConnect();
+  const empty =
+    Object.keys(signatureRequests).length === 0 ? (
+      <p>No signature requests</p>
+    ) : null;
   const ret = Object.values(signatureRequests).map((request) => {
-    const action = request.state === TransactionSignatureRequestState.AwaitUserAction ? (<>
-      <Button onClick={() => approveTransactionSignature(request.key)} type={"primary"}>Approve</Button>
-      <Button onClick={() => rejectTransactionSignature(request.key)} danger>Reject</Button>
-    </>) : null
-    let state = null
+    const action =
+      request.state === TransactionSignatureRequestState.AwaitUserAction ? (
+        <>
+          <Button
+            onClick={() => approveTransactionSignature(request.key)}
+            type={"primary"}
+          >
+            Approve
+          </Button>
+          <Button
+            onClick={() => rejectTransactionSignature(request.key)}
+            danger
+          >
+            Reject
+          </Button>
+        </>
+      ) : null;
+    let state = null;
     switch (request.state) {
       case TransactionSignatureRequestState.Mined:
-        state = <p>Mined: {request.txHash}</p>
+        state = <p>Mined: {request.txHash}</p>;
         break;
-    
+
       default:
-        state = request.state
+        state = request.state;
         break;
     }
     return (
@@ -320,14 +342,14 @@ export function WalletConnectTransactionSignatureRequests() {
           to={request.transaction.to}
         />
         <Divider />
-        { action }
+        {action}
       </Collapse.Panel>
     );
   });
   return (
     <Col span={24}>
       <Card title="Transaction Requests">
-        { empty }
+        {empty}
         <Collapse activeKey={ret.map((_) => _.key as string)}>{ret}</Collapse>
       </Card>
     </Col>
