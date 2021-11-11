@@ -83,7 +83,11 @@ export function WalletConnectSessionRequest() {
     );
   });
 
-  return <Collapse activeKey={ret.map((_) => _.key as string)}>{ret}</Collapse>;
+  return (
+    <Collapse defaultActiveKey={ret.map((_) => _.key as string)}>
+      {ret}
+    </Collapse>
+  );
 }
 
 function AddressInfoC(props: { info: AddressInfo }) {
@@ -350,7 +354,9 @@ export function WalletConnectTransactionSignatureRequests() {
     <Col span={24}>
       <Card title="Transaction Requests">
         {empty}
-        <Collapse activeKey={ret.map((_) => _.key as string)}>{ret}</Collapse>
+        <Collapse defaultActiveKey={ret.map((_) => _.key as string)}>
+          {ret}
+        </Collapse>
       </Card>
     </Col>
   );
