@@ -1,17 +1,17 @@
-import { useState, useEffect, createContext, useContext, FC } from 'react'
-import Onboard from 'bnc-onboard'
-import { API, Wallet } from 'bnc-onboard/dist/src/interfaces'
+import { useState, useEffect, createContext, useContext, FC } from "react";
+import Onboard from "bnc-onboard";
+import { API, Wallet } from "bnc-onboard/dist/src/interfaces";
 import { Web3Provider } from "@ethersproject/providers";
 type OnboardContextProps = {
-  onboard: API | undefined,
-  chainId: number,
-  changeNetwork: (newChainId: number) => void,
-  address: string | undefined,
-  wallet: Wallet | undefined,
-  provider: Web3Provider | undefined,
-  selectWallet: () => void,
-  disconnectWallet: () => void
-}
+  onboard: API | undefined;
+  chainId: number;
+  changeNetwork: (newChainId: number) => void;
+  address: string | undefined;
+  wallet: Wallet | undefined;
+  provider: Web3Provider | undefined;
+  selectWallet: () => void;
+  disconnectWallet: () => void;
+};
 const OnboardContext = createContext<OnboardContextProps>({
   onboard: undefined,
   address: undefined,
@@ -20,111 +20,112 @@ const OnboardContext = createContext<OnboardContextProps>({
   chainId: 0,
   changeNetwork: () => {},
   selectWallet: () => {},
-  disconnectWallet: () => {}
-})
+  disconnectWallet: () => {},
+});
 
 /**
  * A React Web3 wallet hook for [Onboard.js](https://blocknative.com/onboard) library.
  */
 export const OnboardContextProvider: FC = ({ children }) => {
-  const [onboard, setOnboard] = useState<API>()
-  const [chainId, setChainId] = useState<number>(1)
-  const [wallet, setWallet] = useState<Wallet>()
-  const [address, setAdress] = useState<string>()
-  const [isWalletSelected, setWalletSelected] = useState<boolean>()
-  const [provider, setProvider] = useState<Web3Provider>()
+  const [onboard, setOnboard] = useState<API>();
+  const [chainId, setChainId] = useState<number>(42220);
+  const [wallet, setWallet] = useState<Wallet>();
+  const [address, setAdress] = useState<string>();
+  const [isWalletSelected, setWalletSelected] = useState<boolean>();
+  const [provider, setProvider] = useState<Web3Provider>();
 
   // @ts-ignore
-  window.onboard = onboard
+  window.onboard = onboard;
   useEffect(() => {
     setOnboard(
       Onboard({
         networkId: chainId,
         subscriptions: {
           network: (networkId) => {
-            changeNetwork(networkId)
+            changeNetwork(networkId);
           },
-          wallet: wallet => {
+          wallet: (wallet) => {
             if (wallet.provider && wallet.name) {
-              setWallet(wallet)
+              setWallet(wallet);
 
-              const ethersProvider = new Web3Provider(wallet.provider)
+              const ethersProvider = new Web3Provider(wallet.provider);
 
-              window.localStorage.setItem('selectedWallet', wallet.name)
+              window.localStorage.setItem("selectedWallet", wallet.name);
 
-              setProvider(ethersProvider)
-
+              setProvider(ethersProvider);
             } else {
-              setProvider(undefined)
-              setWallet(undefined)
-              window.localStorage.removeItem('selectedWallet')
+              setProvider(undefined);
+              setWallet(undefined);
+              window.localStorage.removeItem("selectedWallet");
             }
           },
-          address: address => {
-            if (address) setAdress(address)
+          address: (address) => {
+            if (address) setAdress(address);
           },
-        }
+        },
       })
-    )
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   useEffect(() => {
-    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
+    const previouslySelectedWallet =
+      window.localStorage.getItem("selectedWallet");
 
     if (previouslySelectedWallet && onboard) {
       onboard.walletSelect(previouslySelectedWallet).then(() => {
-        setWalletSelected(true)
-        onboard.walletCheck()
-      })
+        setWalletSelected(true);
+      });
     }
-  }, [onboard])
+  }, [onboard]);
 
   const selectWallet = async () => {
     if (!isWalletSelected && onboard) {
-      await onboard.walletSelect()
+      await onboard.walletSelect();
 
-      await onboard.walletCheck()
+      await onboard.walletCheck();
 
-      setWalletSelected(true)
+      setWalletSelected(true);
 
-      onboard.config({ darkMode: true, networkId: 1 })
+      onboard.config({ darkMode: true, networkId: 1 });
     }
-  }
+  };
 
   const disconnectWallet = () => {
     if (onboard) {
-      onboard.walletReset()
+      onboard.walletReset();
 
-      setWalletSelected(false)
-      setAdress(undefined)
+      setWalletSelected(false);
+      setAdress(undefined);
 
-      window.localStorage.removeItem('selectedWallet')
+      window.localStorage.removeItem("selectedWallet");
     }
-  }
+  };
 
   const changeNetwork = async (newChainId: number) => {
-    setChainId(newChainId)
+    setChainId(newChainId);
     if (onboard) {
-      onboard.config({ networkId: newChainId })
-      await onboard.walletCheck()
+      onboard.config({ networkId: newChainId });
+      await onboard.walletCheck();
     }
-  }
+  };
 
   return (
-    <OnboardContext.Provider value={{
-      onboard,
-      chainId,
-      wallet,
-      provider,
-      address,
-      selectWallet,
-      disconnectWallet,
-      changeNetwork
-    }}>
+    <OnboardContext.Provider
+      value={{
+        onboard,
+        chainId,
+        wallet,
+        provider,
+        address,
+        selectWallet,
+        disconnectWallet,
+        changeNetwork,
+      }}
+    >
       {children}
     </OnboardContext.Provider>
-  )
-}
+  );
+};
 
-export const useOnboard = () => useContext(OnboardContext)
+export const useOnboard = () => useContext(OnboardContext);
