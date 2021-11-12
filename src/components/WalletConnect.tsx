@@ -14,6 +14,7 @@ import {
   AddressFetchResult,
   AddressInfo,
   AddressInfoType,
+  NETWORKS,
   ParserResult,
 } from "no-yolo-signatures";
 import { useState } from "react";
@@ -22,6 +23,8 @@ import {
   useWalletConnect,
 } from "../hooks/use-walletconnect";
 import { ParamType } from "@ethersproject/abi";
+import { useOnboard } from "../hooks/use-onboard";
+import DescriptionsItem from "antd/lib/descriptions/Item";
 
 export function WalletConnectSessionRequest() {
   const { disconnect, sessions, approveSessionRequest, rejectSessionRequest } =
@@ -94,25 +97,31 @@ function AddressInfoC(props: { info: AddressInfo }) {
   switch (props.info.type) {
     case AddressInfoType.GenericAddressInfo:
       return (
-        <Descriptions title="Generic">
+        <Descriptions bordered title="Generic">
           <Descriptions.Item label="Name">{props.info.name}</Descriptions.Item>
           <Descriptions.Item label="Description">
             {props.info.description}
+          </Descriptions.Item>
+          <Descriptions.Item span={24} label="Info Source">
+            <a href={props.info.source}>{props.info.source}</a>
           </Descriptions.Item>
         </Descriptions>
       );
     case AddressInfoType.TokenListInfo:
       return (
-        <Descriptions title="TokenList">
+        <Descriptions bordered title="TokenList">
           <Descriptions.Item label="Name">{props.info.name}</Descriptions.Item>
-          <Descriptions.Item label="Symbol">
+          <Descriptions.Item span={24} label="Symbol">
             {props.info.symbol}
+          </Descriptions.Item>
+          <Descriptions.Item span={24} label="Info Source">
+            <a href={props.info.source}>{props.info.source}</a>
           </Descriptions.Item>
         </Descriptions>
       );
     case AddressInfoType.ContextInfo:
       return (
-        <Descriptions title="Context">
+        <Descriptions bordered title="Context">
           <Descriptions.Item label="Context type">
             {props.info.contextType}
           </Descriptions.Item>
@@ -128,6 +137,7 @@ function AddressDescriptionValue(props: {
   address: Address;
   addressInfo: AddressFetchResult;
 }) {
+  const { chainId } = useOnboard();
   const addyInfo = props.addressInfo[props.address];
   if (!addyInfo) {
     return <>{props.address}</>;
@@ -149,16 +159,25 @@ function AddressDescriptionValue(props: {
     }
   }
 
+  const network = NETWORKS[chainId];
   return (
     <Popover
       title="Address Info"
       content={
         <>
-          <Descriptions title="Raw">
+          <Descriptions title="Basic" bordered>
             <Descriptions.Item>{props.address}</Descriptions.Item>
+            <DescriptionsItem label="Explorer">
+              <a href={`${network.explorerURL}/address/${props.address}`}>
+                {network.explorerName}
+              </a>
+            </DescriptionsItem>
           </Descriptions>
           {addyInfo.map((info, index) => (
-            <AddressInfoC info={info} key={index} />
+            <>
+              <Divider />
+              <AddressInfoC info={info} key={index} />
+            </>
           ))}
         </>
       }

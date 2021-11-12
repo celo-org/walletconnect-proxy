@@ -1,16 +1,11 @@
-import { createContext, FC, useContext, useEffect } from "react";
+import { createContext, FC, useContext, useEffect, useRef } from "react";
 import WalletConnect from "@walletconnect/client";
 import useKeyState from "./use-topic-array";
-import {
-  getAddressInfoFetchersForChainId,
-  getAbiFetchersForChainId,
-  Parser,
-  ParserResult,
-  Transaction,
-} from "no-yolo-signatures";
+import { ParserResult, Transaction } from "no-yolo-signatures";
 import { utils } from "ethers";
 import { IJsonRpcRequest } from "@walletconnect/types";
 import { useOnboard } from "./use-onboard";
+import { useNoYoloParser } from "./use-no-yolo-parser";
 
 interface Session {
   key: string;
@@ -57,7 +52,7 @@ export enum TransactionSignatureRequestState {
   SentToWallet = "SentToWallet",
   ReceivedWalletResponse = "ReceivedWalletResponse",
   SentToDapp = "SentToDapp",
-  Mined = "Mined"
+  Mined = "Mined",
 }
 
 interface TransactionSignatureRequest {
@@ -78,6 +73,12 @@ interface TransactionSignatureRequests {
 const toChecksum = utils.getAddress;
 
 export const WalletConnectContextProvider: FC = ({ children }) => {
+  const { parser } = useNoYoloParser();
+  const parserRef = useRef(parser);
+
+  useEffect(() => {
+    parserRef.current = parser;
+  }, [parser]);
   const [sessions, addSession, removeSession, updateSession] =
     useKeyState<Session>();
   const [
@@ -157,7 +158,7 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
       removeSession(session);
     });
 
-    client.on("call_request", (error, payload: IJsonRpcRequest) => {
+    client.on("call_request", async (error, payload: IJsonRpcRequest) => {
       if (error) {
         throw error;
       }
@@ -177,21 +178,11 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
           transaction,
           sessionKey: key,
           state: TransactionSignatureRequestState.AwaitUserAction,
-          chainId
+          chainId,
         });
 
-        const abiFetchers = getAbiFetchersForChainId(chainId);
-        const addressInfoFetchers = getAddressInfoFetchersForChainId(chainId);
-        const parser = new Parser({
-          abiFetchers: abiFetchers,
-          addressInfoFetchers: addressInfoFetchers,
-        });
-        parser
-          .parseAsResult(transaction)
-          .then((result) => {
-            updateSignatureRequest(key + payload.id, { noYoloResult: result });
-          })
-          .catch(console.error);
+        const result = await parserRef.current.parseAsResult(transaction);
+        updateSignatureRequest(key + payload.id, { noYoloResult: result });
       }
     });
 
@@ -267,7 +258,7 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
       return;
     }
     if (!provider) {
-      console.error('no provider')
+      console.error("no provider");
       return;
     }
     const signer = provider.getSigner();
@@ -277,22 +268,25 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
     const tx = await signer.sendTransaction(request.transaction);
     updateSignatureRequest(key, {
       state: TransactionSignatureRequestState.ReceivedWalletResponse,
-      txHash: tx.hash
+      txHash: tx.hash,
     });
     const session = sessions[request.sessionKey];
     if (!session || !session.client.connected) {
       throw new Error("dapp connection is gone");
     }
-    session.client.approveRequest({ id: request.requestId, jsonrpc: "2.0", result: tx.hash });
+    session.client.approveRequest({
+      id: request.requestId,
+      jsonrpc: "2.0",
+      result: tx.hash,
+    });
     updateSignatureRequest(key, {
       state: TransactionSignatureRequestState.SentToDapp,
     });
 
-    await provider.waitForTransaction(tx.hash)
+    await provider.waitForTransaction(tx.hash);
     updateSignatureRequest(key, {
-      state: TransactionSignatureRequestState.Mined
-    })
-
+      state: TransactionSignatureRequestState.Mined,
+    });
   };
 
   const rejectTransactionSignature = (key: string) => {

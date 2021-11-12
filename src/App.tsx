@@ -9,24 +9,38 @@ import {
 import { WalletConnectContextProvider } from "./hooks/use-walletconnect";
 import WalletStatus from "./components/WalletStatus";
 import { OnboardContextProvider } from "./hooks/use-onboard";
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ParserSettings from "./components/ParserSettings";
+import { NoYoloContextProvider } from "./hooks/use-no-yolo-parser";
 function App() {
   return (
     <OnboardContextProvider>
-      <WalletConnectContextProvider>
-        <Layout>
-          <Header />
-          <Content style={{ padding: "0 25px", minHeight: "280px" }}>
-            <div className="site-layout-content">
-              <Row gutter={16}>
-                <WalletStatus />
-                <WalletConnectSection />
-                <WalletConnectTransactionSignatureRequests />
-              </Row>
-            </div>
-          </Content>
-        </Layout>
-      </WalletConnectContextProvider>
+      <NoYoloContextProvider>
+        <WalletConnectContextProvider>
+          <BrowserRouter>
+            <Layout>
+              <Header />
+              <Content style={{ padding: "0 25px", minHeight: "280px" }}>
+                <div className="site-layout-content">
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={
+                        <Row gutter={16}>
+                          <WalletStatus />
+                          <WalletConnectSection />
+                          <WalletConnectTransactionSignatureRequests />
+                        </Row>
+                      }
+                    />
+                    <Route path="/settings" element={<ParserSettings />} />
+                  </Routes>
+                </div>
+              </Content>
+            </Layout>
+          </BrowserRouter>
+        </WalletConnectContextProvider>
+      </NoYoloContextProvider>
     </OnboardContextProvider>
   );
 }
