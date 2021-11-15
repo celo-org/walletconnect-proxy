@@ -8,11 +8,17 @@ import {
   Parser,
   TokenListAddressInfoFetcher,
 } from "no-yolo-signatures";
-import { createContext, FC, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  FC,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useOnboard } from "./use-onboard";
 
 export const USER_SOURCE = "user_source";
-
+const CUSTOM_ADDRESSES_PERSIST_KEY = "/noYoloSignatures/customAddresses";
 type NoYoloParserContextProps = {
   parser: Parser;
   addressInfoFetchers: BuiltInAddressInfoFetcher[];
@@ -34,10 +40,30 @@ export const NoYoloContextProvider: FC = ({ children }) => {
   const [addressInfoFetchers, setAddressInfoFetchers] = useState<
     BuiltInAddressInfoFetcher[]
   >([]);
+
   const [customAddresses, setCustomAddresses] = useState<
     GenericAddressListEntry[]
   >([]);
   const [parser, setParser] = useState<Parser>(new Parser({}));
+
+  useEffect(() => {
+    const persistedCustomAddresses =
+      window.localStorage.getItem(CUSTOM_ADDRESSES_PERSIST_KEY) || "[]";
+    setCustomAddresses(JSON.parse(persistedCustomAddresses));
+  }, []);
+
+  const setAndPersistCustomAddresses = (
+    action: (oldEntries: GenericAddressListEntry[]) => GenericAddressListEntry[]
+  ) => {
+    setCustomAddresses((customAddresses) => {
+      const newCustomAddresses = action(customAddresses);
+      window.localStorage.setItem(
+        CUSTOM_ADDRESSES_PERSIST_KEY,
+        JSON.stringify(newCustomAddresses)
+      );
+      return newCustomAddresses;
+    });
+  };
 
   useEffect(() => {
     async function fetch() {
@@ -83,9 +109,9 @@ export const NoYoloContextProvider: FC = ({ children }) => {
   }, [chainId, addressInfoFetchers, customAddresses]);
 
   const addCustomAddress = (entry: GenericAddressListEntry) =>
-    setCustomAddresses((_) => [..._, entry]);
+    setAndPersistCustomAddresses((_) => [..._, entry]);
   const removeCustomAddress = (index: number) =>
-    setCustomAddresses((_) => {
+    setAndPersistCustomAddresses((_) => {
       const ret = [..._];
       ret.splice(index, 1);
       return ret;
