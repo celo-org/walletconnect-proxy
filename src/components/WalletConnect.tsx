@@ -25,6 +25,7 @@ import {
 import { ParamType } from "@ethersproject/abi";
 import { useOnboard } from "../hooks/use-onboard";
 import DescriptionsItem from "antd/lib/descriptions/Item";
+import { USER_SOURCE } from "../hooks/use-no-yolo-parser";
 
 export function WalletConnectSessionRequest() {
   const { disconnect, sessions, approveSessionRequest, rejectSessionRequest } =
@@ -93,30 +94,42 @@ export function WalletConnectSessionRequest() {
   );
 }
 
+function InfoSource(source: string) {
+  if (source === USER_SOURCE) {
+    return (
+      <Descriptions.Item label="Info Source">User-specified</Descriptions.Item>
+    );
+  } else {
+    return (
+      <Descriptions.Item span={24} label="Info Source">
+        <a href={source}>{source}</a>
+      </Descriptions.Item>
+    );
+  }
+}
+
 function AddressInfoC(props: { info: AddressInfo }) {
   switch (props.info.type) {
     case AddressInfoType.GenericAddressInfo:
+      const source = InfoSource(props.info.source);
       return (
         <Descriptions bordered title="Generic">
           <Descriptions.Item label="Name">{props.info.name}</Descriptions.Item>
           <Descriptions.Item label="Description">
             {props.info.description}
           </Descriptions.Item>
-          <Descriptions.Item span={24} label="Info Source">
-            <a href={props.info.source}>{props.info.source}</a>
-          </Descriptions.Item>
+          {source}
         </Descriptions>
       );
     case AddressInfoType.TokenListInfo:
+      const tokenSource = InfoSource(props.info.source);
       return (
         <Descriptions bordered title="TokenList">
           <Descriptions.Item label="Name">{props.info.name}</Descriptions.Item>
           <Descriptions.Item span={24} label="Symbol">
             {props.info.symbol}
           </Descriptions.Item>
-          <Descriptions.Item span={24} label="Info Source">
-            <a href={props.info.source}>{props.info.source}</a>
-          </Descriptions.Item>
+          {tokenSource}
         </Descriptions>
       );
     case AddressInfoType.ContextInfo:
