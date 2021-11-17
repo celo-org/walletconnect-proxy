@@ -87,7 +87,7 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
     removeSignatureRequest,
     updateSignatureRequest,
   ] = useKeyState<TransactionSignatureRequest>();
-  const { chainId, address, provider } = useOnboard();
+  const { chainId, address, provider, onboard } = useOnboard();
 
   const ALL_SESSION_KEY = "/walletconnectproxy/sessions";
   const persistSession = (client: WalletConnect) => {
@@ -261,6 +261,10 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
       console.error("no provider");
       return;
     }
+    if (!onboard) {
+      return;
+    }
+    await onboard.walletCheck();
     const signer = provider.getSigner();
     updateSignatureRequest(key, {
       state: TransactionSignatureRequestState.SentToWallet,

@@ -82,11 +82,7 @@ export const OnboardContextProvider: FC = ({ children }) => {
   const selectWallet = async () => {
     if (!isWalletSelected && onboard) {
       await onboard.walletSelect();
-
-      await onboard.walletCheck();
-
       setWalletSelected(true);
-
       onboard.config({ darkMode: true, networkId: 1 });
     }
   };
@@ -102,7 +98,10 @@ export const OnboardContextProvider: FC = ({ children }) => {
     }
   };
 
-  const changeNetwork = async (newChainId: number) => {
+  const changeNetwork = async (newChainId: number | undefined) => {
+    if (!newChainId) {
+      return;
+    }
     setChainId(newChainId);
     if (onboard) {
       onboard.config({ networkId: newChainId });
