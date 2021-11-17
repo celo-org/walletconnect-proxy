@@ -16,52 +16,62 @@ import React, {
   useState,
 } from "react";
 import { useOnboard } from "./use-onboard";
+import usePersistedArray from "./use-persisted-array";
 
 export const USER_SOURCE = "user_source";
 const CUSTOM_ADDRESSES_PERSIST_KEY = "/noYoloSignatures/customAddresses";
+const CUSTOM_LISTS_PERSIST_KEY = "/noYoloSignatures/customLists";
+
+export interface CustomListEntry {
+  type: "generic" | "token";
+  url: string;
+}
+
 type NoYoloParserContextProps = {
   parser: Parser;
-  addressInfoFetchers: BuiltInAddressInfoFetcher[];
+  builtInInfoFetchers: BuiltInAddressInfoFetcher[];
   customAddresses: GenericAddressListEntry[];
+  customAddressInfoFetchers: { [url: string]: BuiltInAddressInfoFetcher };
   addCustomAddress: (entry: GenericAddressListEntry) => void;
   removeCustomAddress: (index: number) => void;
+  addCustomList: (entry: CustomListEntry) => void;
+  removeCustomList: (index: number) => void;
 };
 
 const NoYoloParserContext = createContext<NoYoloParserContextProps>({
   parser: new Parser({}),
-  addressInfoFetchers: [],
+  builtInInfoFetchers: [],
   customAddresses: [],
+  customAddressInfoFetchers: {},
   addCustomAddress: () => {},
   removeCustomAddress: () => {},
+  addCustomList: () => {},
+  removeCustomList: () => {},
 });
 
 export const NoYoloContextProvider: FC = ({ children }) => {
   const { chainId } = useOnboard();
-  const [addressInfoFetchers, setAddressInfoFetchers] = useState<
+  const [builtInInfoFetchers, setBulitInInfoFetchers] = useState<
     BuiltInAddressInfoFetcher[]
   >([]);
 
-  const [customAddresses, setCustomAddresses] = useState<
-    GenericAddressListEntry[]
-  >([]);
+  const [customAddresses, addCustomAddress, removeCustomAddress] =
+    usePersistedArray<GenericAddressListEntry>(CUSTOM_ADDRESSES_PERSIST_KEY);
+  const [customLists, addCustomList, removeCustomList] =
+    usePersistedArray<CustomListEntry>(CUSTOM_LISTS_PERSIST_KEY);
+  const [customAddressInfoFetchers, setCustomAddressInfoFetchers] = useState<{
+    [url: string]: BuiltInAddressInfoFetcher;
+  }>({});
   const [parser, setParser] = useState<Parser>(new Parser({}));
 
-  useEffect(() => {
-    const persistedCustomAddresses =
-      window.localStorage.getItem(CUSTOM_ADDRESSES_PERSIST_KEY) || "[]";
-    setCustomAddresses(JSON.parse(persistedCustomAddresses));
-  }, []);
-
-  const setAndPersistCustomAddresses = (
-    action: (oldEntries: GenericAddressListEntry[]) => GenericAddressListEntry[]
+  const addCustomAddressInfoFetcher = (
+    key: string,
+    fetcher: BuiltInAddressInfoFetcher
   ) => {
-    setCustomAddresses((customAddresses) => {
-      const newCustomAddresses = action(customAddresses);
-      window.localStorage.setItem(
-        CUSTOM_ADDRESSES_PERSIST_KEY,
-        JSON.stringify(newCustomAddresses)
-      );
-      return newCustomAddresses;
+    setCustomAddressInfoFetchers((fetchers) => {
+      const newFetchers = { ...fetchers };
+      newFetchers[key] = fetcher;
+      return newFetchers;
     });
   };
 
@@ -70,9 +80,9 @@ export const NoYoloContextProvider: FC = ({ children }) => {
       const contextFetcher = new ContextAddressInfoFetcher();
       const network = NETWORKS[chainId];
       if (!network) {
-        setAddressInfoFetchers([contextFetcher]);
+        setBulitInInfoFetchers([contextFetcher]);
       }
-      setAddressInfoFetchers(
+      setBulitInInfoFetchers(
         [
           network.genericAddressListUrl
             ? [
@@ -98,33 +108,62 @@ export const NoYoloContextProvider: FC = ({ children }) => {
       new Parser({
         abiFetchers,
         addressInfoFetchers: [
-          ...addressInfoFetchers,
           new GenericAddressListInfoFetcher(
             { addresses: customAddresses },
             USER_SOURCE
           ),
+          ...Object.values(customAddressInfoFetchers),
+          ...builtInInfoFetchers,
         ],
       })
     );
-  }, [chainId, addressInfoFetchers, customAddresses]);
+  }, [
+    chainId,
+    builtInInfoFetchers,
+    customAddresses,
+    customAddressInfoFetchers,
+  ]);
 
-  const addCustomAddress = (entry: GenericAddressListEntry) =>
-    setAndPersistCustomAddresses((_) => [..._, entry]);
-  const removeCustomAddress = (index: number) =>
-    setAndPersistCustomAddresses((_) => {
-      const ret = [..._];
-      ret.splice(index, 1);
-      return ret;
+  useEffect(() => {
+    customLists.forEach((list) => {
+      if (!customAddressInfoFetchers[list.url]) {
+        switch (list.type) {
+          case "generic":
+            GenericAddressListInfoFetcher.fromURL(list.url).then((fetcher) => {
+              addCustomAddressInfoFetcher(list.url, fetcher);
+            });
+            break;
+          case "token":
+            TokenListAddressInfoFetcher.fromURL(list.url).then((fetcher) => {
+              addCustomAddressInfoFetcher(list.url, fetcher);
+            });
+            break;
+        }
+      }
     });
+    Object.keys(customAddressInfoFetchers).forEach((key, index) => {
+      const entry = customLists.find((_) => _.url === key);
+      if (!entry) {
+        setCustomAddressInfoFetchers((oldFetchers) => {
+          const newFetchers = { ...oldFetchers };
+          delete newFetchers[key];
+          return newFetchers;
+        });
+      }
+    });
+  }, [customLists, customAddressInfoFetchers]);
 
   return (
     <NoYoloParserContext.Provider
       value={{
         parser,
-        addressInfoFetchers,
+        builtInInfoFetchers,
         customAddresses,
+        customAddressInfoFetchers,
         addCustomAddress,
         removeCustomAddress,
+        addCustomList,
+        removeCustomList,
       }}
     >
       {children}

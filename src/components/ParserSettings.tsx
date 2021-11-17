@@ -103,28 +103,60 @@ function AddressInfoFetcherPanel(
 }
 
 export default function ParserSettings() {
-  const { addressInfoFetchers, customAddresses, addCustomAddress } =
-    useNoYoloParser();
-  const [form] = Form.useForm();
+  const {
+    builtInInfoFetchers,
+    customAddresses,
+    addCustomAddress,
+    removeCustomAddress,
+    customAddressInfoFetchers,
+    addCustomList,
+    removeCustomList,
+  } = useNoYoloParser();
+  const [customAddressForm] = Form.useForm();
+  const [customListForm] = Form.useForm();
   const requiredRules = [{ required: true }];
-  const onFinish = (values: any) => {
+  const onFinishCustomAddressForm = (values: any) => {
     addCustomAddress(values);
-    form.resetFields();
+    customAddressForm.resetFields();
+  };
+  const onFinishCustomListForm = (values: any) => {
+    addCustomList(values);
+    customListForm.resetFields();
   };
   const onChainChange = (chainId: number) => {
-    form.setFieldsValue({ chainId });
+    customAddressForm.setFieldsValue({ chainId });
   };
+  const onListTypeChange = (type: string) => {
+    customListForm.setFieldsValue({ type });
+  };
+  const customAddressesColumns = [
+    ...genericColumns,
+    {
+      title: "Actions",
+      render: (_0: any, _1: any, index: number) => {
+        return (
+          <Button onClick={() => removeCustomAddress(index)}>Remove</Button>
+        );
+      },
+    },
+  ];
   return (
     <div>
       <h2>Parser Settings</h2>
-      <h4>Address Info Fetchers</h4>
-
+      <h3>Address Info Fetchers</h3>
       <Collapse>
         <Collapse.Panel header="Custom Addresses" key="custom">
-          <Table dataSource={customAddresses} columns={genericColumns} />
+          <Table
+            dataSource={customAddresses}
+            columns={customAddressesColumns}
+          />
           <Divider />
           <h3>Add new entry</h3>
-          <Form form={form} layout="inline" onFinish={onFinish}>
+          <Form
+            form={customAddressForm}
+            layout="inline"
+            onFinish={onFinishCustomAddressForm}
+          >
             <Form.Item label="Name" name="name" rules={requiredRules}>
               <Input />
             </Form.Item>
@@ -153,8 +185,8 @@ export default function ParserSettings() {
                   type="primary"
                   htmlType="submit"
                   disabled={
-                    !form.isFieldsTouched(true) ||
-                    !!form
+                    !customAddressForm.isFieldsTouched(true) ||
+                    !!customAddressForm
                       .getFieldsError()
                       .filter(({ errors }) => errors.length).length
                   }
@@ -165,7 +197,22 @@ export default function ParserSettings() {
             </Form.Item>
           </Form>
         </Collapse.Panel>
-        {addressInfoFetchers.map((fetcher, index) => {
+        {}
+        {Object.keys(customAddressInfoFetchers).map((url, index) => {
+          const { title, body } = AddressInfoFetcherPanel(
+            customAddressInfoFetchers[url]
+          );
+          return (
+            <Collapse.Panel header={title} key={"custom" + index}>
+              {/* This technically is incorrect */}
+              <Button onClick={() => removeCustomList(index)}>
+                Remove this list
+              </Button>
+              {body}
+            </Collapse.Panel>
+          );
+        })}
+        {builtInInfoFetchers.map((fetcher, index) => {
           const { title, body } = AddressInfoFetcherPanel(fetcher);
           return (
             <Collapse.Panel header={title} key={index}>
@@ -174,6 +221,38 @@ export default function ParserSettings() {
           );
         })}
       </Collapse>
+      <h4>Add custom List</h4>
+      <Form
+        form={customListForm}
+        layout="inline"
+        onFinish={onFinishCustomListForm}
+      >
+        <Form.Item name="type" label="List type" rules={requiredRules}>
+          <Select style={{ minWidth: "200px" }} onChange={onListTypeChange}>
+            <Select.Option value="generic">Generic List</Select.Option>
+            <Select.Option value="token">Token list</Select.Option>
+          </Select>
+        </Form.Item>
+        <Form.Item label="URL" name="url" rules={requiredRules}>
+          <Input />
+        </Form.Item>
+        <Form.Item shouldUpdate>
+          {() => (
+            <Button
+              type="primary"
+              htmlType="submit"
+              disabled={
+                !customAddressForm.isFieldsTouched(true) ||
+                !!customAddressForm
+                  .getFieldsError()
+                  .filter(({ errors }) => errors.length).length
+              }
+            >
+              Add List
+            </Button>
+          )}
+        </Form.Item>
+      </Form>
     </div>
   );
 }
