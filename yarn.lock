@@ -11564,10 +11564,10 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-no-yolo-signatures@0.0.1-alpha2:
-  version "0.0.1-alpha2"
-  resolved "https://registry.yarnpkg.com/no-yolo-signatures/-/no-yolo-signatures-0.0.1-alpha2.tgz#2941ae098de08df46a20eb1f70fb148734c70080"
-  integrity sha512-5BZKhXHDdlOTnvifI7Tf5yGFtRvaP9xAESTNnEP+DZ+9pamOG/s866arWCwG8a/W22nAGcpXtq0ciIfwZKSWkA==
+no-yolo-signatures@0.0.1-alpha4:
+  version "0.0.1-alpha4"
+  resolved "https://registry.yarnpkg.com/no-yolo-signatures/-/no-yolo-signatures-0.0.1-alpha4.tgz#b670d55c0efe984cf4a6a016a357f2e8eb5257d9"
+  integrity sha512-2+rM4JCFCjq1D6bTQh6SYoh//7c+qXk0sJlo5EsncGArAvaPKIGcrAHSsLge5JQi3k0S/7I4fpRs5W2jnAXBTQ==
   dependencies:
     "@celo/base" "1.3.3"
     "@ethersproject/abi" "5.4.1"
