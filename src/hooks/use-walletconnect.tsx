@@ -220,6 +220,7 @@ export const WalletConnectContextProvider: FC = ({ children }) => {
       return;
     }
     if (!address) {
+      alert("Connect a wallet first");
       return;
     }
     if (session.client.connected) {

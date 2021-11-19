@@ -54,6 +54,19 @@ function AddressInfoFetcherPanel(
         />
       );
       break;
+    case BuiltInAddressInfoFetchersType.GenericWarningList:
+      title = "Generic Warning list";
+      if (addressInfoFetcher.source !== USER_SOURCE) {
+        title += ` (Source: ${addressInfoFetcher.source})`;
+      }
+
+      body = (
+        <Table
+          dataSource={addressInfoFetcher.addressList.addresses}
+          columns={genericColumns}
+        />
+      );
+      break;
     case BuiltInAddressInfoFetchersType.TokenList:
       title = "TokenList";
       if (addressInfoFetcher.source !== USER_SOURCE) {
@@ -231,6 +244,7 @@ export default function ParserSettings() {
           <Select style={{ minWidth: "200px" }} onChange={onListTypeChange}>
             <Select.Option value="generic">Generic List</Select.Option>
             <Select.Option value="token">Token list</Select.Option>
+            <Select.Option value="warning">Warning list</Select.Option>
           </Select>
         </Form.Item>
         <Form.Item label="URL" name="url" rules={requiredRules}>

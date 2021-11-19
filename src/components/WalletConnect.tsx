@@ -115,11 +115,26 @@ function AddressInfoC(props: { info: AddressInfo }) {
       return (
         <Descriptions bordered title="Generic">
           <Descriptions.Item label="Name">{props.info.name}</Descriptions.Item>
-          <Descriptions.Item label="Description">
+          <Descriptions.Item span={24} label="Description">
             {props.info.description}
           </Descriptions.Item>
           {source}
         </Descriptions>
+      );
+    case AddressInfoType.GenericWarningInfo:
+      const warningSource = InfoSource(props.info.source);
+      return (
+        <Badge.Ribbon text="Warning" color="red">
+          <Descriptions bordered title="Warning">
+            <Descriptions.Item label="Name">
+              {props.info.name}
+            </Descriptions.Item>
+            <Descriptions.Item span={24} label="Description">
+              {props.info.description}
+            </Descriptions.Item>
+            {warningSource}
+          </Descriptions>
+        </Badge.Ribbon>
       );
     case AddressInfoType.TokenListInfo:
       const tokenSource = InfoSource(props.info.source);
@@ -167,10 +182,18 @@ function AddressDescriptionValue(props: {
       case AddressInfoType.GenericAddressInfo:
         name = addyInfo[0].name;
         break;
+      case AddressInfoType.GenericWarningInfo:
+        name = addyInfo[0].name;
+        break;
       default:
         break;
     }
   }
+
+  const hasWarning = !!addyInfo.find(
+    (_) => _.type === AddressInfoType.GenericWarningInfo
+  );
+  const linkStyle = hasWarning ? { color: "red" } : {};
 
   const network = NETWORKS[chainId];
   return (
@@ -196,7 +219,9 @@ function AddressDescriptionValue(props: {
       }
     >
       <Badge color="blue" dot>
-        <a href="#">{name}</a>
+        <a href="#" style={linkStyle}>
+          {name}
+        </a>
       </Badge>
     </Popover>
   );

@@ -3,6 +3,7 @@ import {
   ContextAddressInfoFetcher,
   GenericAddressListEntry,
   GenericAddressListInfoFetcher,
+  GenericWarningListInfoFetcher,
   getAbiFetchersForChainId,
   NETWORKS,
   Parser,
@@ -23,7 +24,7 @@ const CUSTOM_ADDRESSES_PERSIST_KEY = "/noYoloSignatures/customAddresses";
 const CUSTOM_LISTS_PERSIST_KEY = "/noYoloSignatures/customLists";
 
 export interface CustomListEntry {
-  type: "generic" | "token";
+  type: "generic" | "token" | "warning";
   url: string;
 }
 
@@ -138,6 +139,10 @@ export const NoYoloContextProvider: FC = ({ children }) => {
               addCustomAddressInfoFetcher(list.url, fetcher);
             });
             break;
+          case "warning":
+            GenericWarningListInfoFetcher.fromURL(list.url).then((fetcher) => {
+              addCustomAddressInfoFetcher(list.url, fetcher);
+            });
         }
       }
     });
